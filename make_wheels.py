@@ -1,10 +1,25 @@
 import os
 import hashlib
 import urllib.request
+import tarfile
+import gzip
 from email.message import EmailMessage
 from wheel.wheelfile import WheelFile, get_zipinfo_datetime
 from zipfile import ZipInfo, ZIP_DEFLATED
 import libarchive # from libarchive-c
+import packaging.tags
+
+
+zig_version = '0.8.0'
+release_table = {
+    'windows-i386':   'win32',
+    'windows-x86_64': 'win_amd64',
+    'macos-x86_64':   'macosx_10_9_x86_64',
+    'macos-aarch64':  'macosx_11_0_arm64',
+    'linux-i386':     'manylinux_2_12_i686.manylinux2010_i686',
+    'linux-x86_64':   'manylinux_2_12_x86_64.manylinux2010_x86_64',
+    'linux-aarch64':  'manylinux_2_17_aarch64.manylinux2014_aarch64',
+}
 
 
 class ReproducibleWheelFile(WheelFile):
@@ -110,26 +125,57 @@ sys.exit(subprocess.call([
     )
 
 
-zig_version = '0.8.0'
+def fetch_zig_archive(platform):
+    url = f'https://ziglang.org/download/{zig_version}/zig-{platform}-{zig_version}.' + \
+            ('zip' if platform.startswith('windows-') else 'tar.xz')
+    with urllib.request.urlopen(url) as request:
+        return request.read()
 
-for zig_platform, python_platform in {
-    'windows-i386':   'win32',
-    'windows-x86_64': 'win_amd64',
-    'macos-x86_64':   'macosx_10_9_x86_64',
-    'macos-aarch64':  'macosx_11_0_arm64',
-    'linux-i386':     'manylinux_2_12_i686.manylinux2010_i686',
-    'linux-x86_64':   'manylinux_2_12_x86_64.manylinux2010_x86_64',
-    'linux-aarch64':  'manylinux_2_17_aarch64.manylinux2014_aarch64',
-}.items():
-    zig_url = f'https://ziglang.org/download/{zig_version}/zig-{zig_platform}-{zig_version}.' + \
-              ('zip' if zig_platform.startswith('windows-') else 'tar.xz')
-    with urllib.request.urlopen(zig_url) as request:
-        zig_archive = request.read()
+
+def build_sdist(sdist_directory, config_settings=None):
+    source_date_epoch = os.environ.get('SOURCE_DATE_EPOCH')
+    mtime = int(source_date_epoch) if source_date_epoch else None
+
+    file = gzip.GzipFile(
+        os.path.join(sdist_directory, f'ziglang-{zig_version}.tar.gz'),
+        mode='wb',
+        mtime=mtime)
+    tar = tarfile.TarFile(
+        mode='w',
+        fileobj=file,
+        format=tarfile.PAX_FORMAT)
+
+    for file in (
+        'pyproject.toml',
+        'make_wheels.py',
+        'LICENSE.txt',
+        'README.md',
+        'README.pypi.md',
+    ):
+        tar.add(file, f'ziglang-{zig_version}/{file}')
+
+    return f'ziglang-{zig_version}.tar.gz'
+
+
+def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+    for python_tag in packaging.tags._platform_tags():
+        for zig_platform, python_platform in release_table.items():
+            if python_tag in python_platform.split('.'):
+                zig_archive = fetch_zig_archive(zig_platform)
+                return write_ziglang_wheel(wheel_directory,
+                    version=zig_version,
+                    platform=python_platform,
+                    archive=zig_archive)
+
+
+if __name__ == '__main__':
+    for zig_platform, python_platform in release_table.items():
+        zig_archive = fetch_zig_archive(zig_platform)
         print(f'{hashlib.sha256(zig_archive).hexdigest()} {zig_url}')
 
-    wheel_path = write_ziglang_wheel('dist/',
-        version=zig_version,
-        platform=python_platform,
-        archive=zig_archive)
-    with open(wheel_path, 'rb') as wheel:
-        print(f'  {hashlib.sha256(wheel.read()).hexdigest()} {wheel_path}')
+        wheel_path = write_ziglang_wheel('dist/',
+            version=zig_version,
+            platform=python_platform,
+            archive=zig_archive)
+        with open(wheel_path, 'rb') as wheel:
+            print(f'  {hashlib.sha256(wheel.read()).hexdigest()} {wheel_path}')
