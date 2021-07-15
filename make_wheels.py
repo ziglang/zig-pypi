@@ -119,6 +119,7 @@ for zig_platform, python_platform in {
     'macos-aarch64':  'macosx_11_0_arm64',
     'linux-i386':     'manylinux_2_12_i686.manylinux2010_i686',
     'linux-x86_64':   'manylinux_2_12_x86_64.manylinux2010_x86_64',
+    'linux-armv7a':   'manylinux_2_17_armv7l.manylinux2014_armv7l',
     'linux-aarch64':  'manylinux_2_17_aarch64.manylinux2014_aarch64',
 }.items():
     zig_url = f'https://ziglang.org/download/{zig_version}/zig-{zig_platform}-{zig_version}.' + \
