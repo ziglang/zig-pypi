@@ -46,6 +46,10 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
     dist_info  = f'{name}-{version}.dist-info'
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
+        f'{dist_info}/entry_points.txt': f'''\
+[console_scripts]
+zig=ziglang.__main__:main
+'''.encode('ascii'),
         f'{dist_info}/METADATA': make_message({
             'Metadata-Version': '2.1',
             'Name': name,
@@ -77,11 +81,15 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
 
             if entry_name.startswith('zig'):
                 contents['ziglang/__main__.py'] = f'''\
-import os, sys, subprocess
-sys.exit(subprocess.call([
-    os.path.join(os.path.dirname(__file__), "{entry_name}"),
-    *sys.argv[1:]
-]))
+import os, sys
+def main():
+    os.execl(
+        os.path.join(os.path.dirname(__file__), "{entry_name}"),
+        "zig", 
+        *sys.argv[1:]
+    )
+if __name__ == "__main__":
+    main()
 '''.encode('ascii')
 
     with open('README.pypi.md') as f:
