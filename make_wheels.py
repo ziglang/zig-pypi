@@ -110,7 +110,7 @@ sys.exit(subprocess.call([
     )
 
 
-zig_version = '0.9.0'
+zig_version = '0.9.1'
 
 for zig_platform, python_platform in {
     'windows-i386':   'win32',
