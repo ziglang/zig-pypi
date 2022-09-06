@@ -71,15 +71,24 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
             if entry.isdir or not entry_name:
                 continue
 
-            zip_info = ZipInfo(f'ziglang/{entry_name}')
+            if entry_name.startswith('zig'):
+                entry_name = f'bin/{entry_name}'
+            elif entry_name.startswith('lib/'):
+                entry_name = f'lib/zig/{entry_name[4:]}'
+            elif entry_name == 'LICENSE':
+                entry_name = f'lib/zig/{entry_name}'
+            elif entry_name.startswith('doc/'):
+                entry_name = f'share/doc/zig/{entry_name[4:]}'
+
+            zip_info = ZipInfo(f'ziglang-{version}.data/data/{entry_name}')
             zip_info.external_attr = (entry.mode & 0xFFFF) << 16
             contents[zip_info] = b''.join(entry.get_blocks())
 
-            if entry_name.startswith('zig'):
+            if entry_name.startswith('bin/zig'):
                 contents['ziglang/__main__.py'] = f'''\
 import os, sys, subprocess
 sys.exit(subprocess.call([
-    os.path.join(os.path.dirname(__file__), "{entry_name}"),
+    os.path.join(sys.prefix, "{entry_name}"),
     *sys.argv[1:]
 ]))
 '''.encode('ascii')
