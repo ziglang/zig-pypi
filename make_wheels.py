@@ -41,7 +41,7 @@ def write_wheel_file(filename, contents):
     return filename
 
 
-def write_wheel(out_dir, *, name, version, tag, metadata, description, contents):
+def write_wheel(out_dir, *, name, version, tag, innertags, metadata, description, contents):
     wheel_name = f'{name}-{version}-{tag}.whl'
     dist_info  = f'{name}-{version}.dist-info'
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
@@ -56,7 +56,7 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
             'Wheel-Version': '1.0',
             'Generator': 'ziglang make_wheels.py',
             'Root-Is-Purelib': 'false',
-            'Tag': tag,
+            'Tag': innertags,
         }),
     })
 
@@ -99,7 +99,8 @@ sys.exit(subprocess.call([
     return write_wheel(out_dir,
         name='ziglang',
         version=version,
-        tag=f'py3-none-{platform}',
+        tag=f'py2.py3-none-{platform}',
+        innertags=[f'py2-none-{platform}', f'py3-none-{platform}'],
         metadata={
             'Summary': 'Zig is a general-purpose programming language and toolchain for maintaining robust, optimal, and reusable software.',
             'Description-Content-Type': 'text/markdown',
@@ -112,7 +113,6 @@ sys.exit(subprocess.call([
                 'Source Code, https://github.com/ziglang/zig-pypi',
                 'Bug Tracker, https://github.com/ziglang/zig-pypi/issues',
             ],
-            'Requires-Python': '~=3.5',
         },
         description=description,
         contents=contents,
