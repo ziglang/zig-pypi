@@ -113,7 +113,6 @@ sys.exit(subprocess.call([
 zig_version = '0.10.0'
 
 for zig_platform, python_platform in {
-    'windows-i386':   'win32',
     'windows-x86_64': 'win_amd64',
     'macos-x86_64':   'macosx_10_9_x86_64',
     'macos-aarch64':  'macosx_11_0_arm64',
