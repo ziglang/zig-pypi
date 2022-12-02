@@ -112,6 +112,11 @@ sys.exit(subprocess.call([
 
 zig_version = '0.10.0'
 
+# When updating zig_version above, reset python_version_suffix to ''.
+# When uploading a new Python wheel that packages the same Zig binaries,
+# set python_version_suffix to '.post1', '.post2', ... as necessary.
+python_version_suffix = '.post1'
+
 for zig_platform, python_platform in {
     'windows-x86_64': 'win_amd64',
     'macos-x86_64':   'macosx_10_9_x86_64',
@@ -128,7 +133,7 @@ for zig_platform, python_platform in {
         print(f'{hashlib.sha256(zig_archive).hexdigest()} {zig_url}')
 
     wheel_path = write_ziglang_wheel('dist/',
-        version=zig_version,
+        version=zig_version + python_version_suffix,
         platform=python_platform,
         archive=zig_archive)
     with open(wheel_path, 'rb') as wheel:
