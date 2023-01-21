@@ -110,7 +110,7 @@ sys.exit(subprocess.call([
     )
 
 
-zig_version = '0.10.0'
+zig_version = '0.10.1'
 
 # When updating zig_version above, reset python_version_suffix to ''.
 # When uploading a new Python wheel that packages the same Zig binaries,
