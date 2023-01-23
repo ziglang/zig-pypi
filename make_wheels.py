@@ -112,10 +112,12 @@ sys.exit(subprocess.call([
 
 zig_version = '0.10.1'
 
-# When updating zig_version above, reset python_version_suffix to ''.
-# When uploading a new Python wheel that packages the same Zig binaries,
-# set python_version_suffix to '.post1', '.post2', ... as necessary.
-python_version_suffix = '.post1'
+python_version_suffix = ''
+if zig_version == '0.10.1':
+    # When updating zig_version above, reset python_version_suffix to ''.
+    # When uploading a new Python wheel that packages the same Zig binaries,
+    # set python_version_suffix to '.post1', '.post2', ... as necessary.
+    python_version_suffix = '.post1'
 
 for zig_platform, python_platform in {
     'windows-x86_64': 'win_amd64',
