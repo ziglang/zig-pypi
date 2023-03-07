@@ -19,12 +19,8 @@ The script requires Python 3.5 or later.
 Install the dependencies:
 
 ```shell
-pip install wheel twine libarchive-c
+pip install wheel twine
 ```
-
-The `libarchive-c` Python library requires the native [libarchive][] library to be available.
-
-[libarchive]: https://libarchive.org/
 
 Building wheels
 ---------------
