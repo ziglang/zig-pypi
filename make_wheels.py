@@ -1,4 +1,5 @@
 import os
+import json
 import hashlib
 import urllib.request
 from email.message import EmailMessage
@@ -6,6 +7,20 @@ from wheel.wheelfile import WheelFile, get_zipinfo_datetime
 from zipfile import ZipInfo, ZIP_DEFLATED
 import libarchive # from libarchive-c
 
+ZIG_VERSION_INFO_URL = 'https://ziglang.org/download/index.json'
+ZIG_PYTHON_PLATFORMS = {
+    'x86_64-windows': 'win_amd64',
+    'x86_64-macos':   'macosx_10_9_x86_64',
+    'aarch64-macos':  'macosx_11_0_arm64',
+    'i386-linux':     'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
+    # renamed i386 to x86
+    'x86-linux':      'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
+    'x86_64-linux':   'manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64',
+    'aarch64-linux':
+        'manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64',
+    # no longer present?
+    'armv7a-linux':   'manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l',
+}
 
 class ReproducibleWheelFile(WheelFile):
     def writestr(self, zinfo, *args, **kwargs):
@@ -110,6 +125,10 @@ sys.exit(subprocess.call([
     )
 
 
+def fetch_zig_version_info():
+    with urllib.request.urlopen(ZIG_VERSION_INFO_URL) as request:
+        return json.loads(request.read())
+
 zig_version = '0.10.1'
 
 python_version_suffix = ''
@@ -119,23 +138,40 @@ if zig_version == '0.10.1':
     # set python_version_suffix to '.post1', '.post2', ... as necessary.
     python_version_suffix = '.post1'
 
-for zig_platform, python_platform in {
-    'windows-x86_64': 'win_amd64',
-    'macos-x86_64':   'macosx_10_9_x86_64',
-    'macos-aarch64':  'macosx_11_0_arm64',
-    'linux-i386':     'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
-    'linux-x86_64':   'manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64',
-    'linux-armv7a':   'manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l',
-    'linux-aarch64':  'manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64',
-}.items():
-    zig_url = f'https://ziglang.org/download/{zig_version}/zig-{zig_platform}-{zig_version}.' + \
-              ('zip' if zig_platform.startswith('windows-') else 'tar.xz')
+platforms = None  # default to all platforms
+
+if not platforms:
+    platforms = list(ZIG_PYTHON_PLATFORMS)
+zig_versions_info = fetch_zig_version_info()
+
+try:
+    zig_version_info = zig_versions_info[zig_version]
+except KeyError:
+    print(f"Invalid version, valid values: {list(zig_versions_info.keys())}")
+    raise
+
+effective_zig_version = zig_version_info.get('version', zig_version)
+
+for zig_platform in platforms:
+    python_platform = ZIG_PYTHON_PLATFORMS[zig_platform]
+    if zig_platform not in zig_version_info:
+        print(f"{zig_platform} not present for "
+              f"version {zig_version} / {effective_zig_version}")
+        continue
+    zig_download = zig_version_info[zig_platform]
+    zig_url = zig_download['tarball']
+    expected_hash = zig_download['shasum']
+
     with urllib.request.urlopen(zig_url) as request:
         zig_archive = request.read()
+        zig_archive_hash = hashlib.sha256(zig_archive).hexdigest()
+        if zig_archive_hash != expected_hash:
+            print(zig_download, "SHA256 hash mismatch!")
+            raise AssertionError
         print(f'{hashlib.sha256(zig_archive).hexdigest()} {zig_url}')
 
     wheel_path = write_ziglang_wheel('dist/',
-        version=zig_version + python_version_suffix,
+        version=effective_zig_version.replace('-', '.') + python_version_suffix,
         platform=python_platform,
         archive=zig_archive)
     with open(wheel_path, 'rb') as wheel:
