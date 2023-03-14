@@ -1,7 +1,9 @@
+import argparse
 import os
 import json
 import hashlib
 import urllib.request
+from pathlib import Path
 from email.message import EmailMessage
 from wheel.wheelfile import WheelFile, get_zipinfo_datetime
 from zipfile import ZipInfo, ZIP_DEFLATED
@@ -129,50 +131,65 @@ def fetch_zig_version_info():
     with urllib.request.urlopen(ZIG_VERSION_INFO_URL) as request:
         return json.loads(request.read())
 
-zig_version = '0.10.1'
 
-python_version_suffix = ''
-if zig_version == '0.10.1':
-    # When updating zig_version above, reset python_version_suffix to ''.
-    # When uploading a new Python wheel that packages the same Zig binaries,
-    # set python_version_suffix to '.post1', '.post2', ... as necessary.
-    python_version_suffix = '.post1'
+def fetch_and_write_ziglang_wheels(
+    outdir='dist/', zig_version='master', python_version_suffix='', platforms=tuple()
+):
+    Path(outdir).mkdir(exist_ok=True)
+    if not platforms:
+        platforms = list(ZIG_PYTHON_PLATFORMS)
+    zig_versions_info = fetch_zig_version_info()
 
-platforms = None  # default to all platforms
+    if zig_version == 'latest':
+        zig_version = [version for version in zig_versions_info if version != 'master'][0]
 
-if not platforms:
-    platforms = list(ZIG_PYTHON_PLATFORMS)
-zig_versions_info = fetch_zig_version_info()
+    try:
+        zig_version_info = zig_versions_info[zig_version]
+    except KeyError:
+        print(f"Invalid version, valid values: {list(zig_versions_info)}")
+        raise
 
-try:
-    zig_version_info = zig_versions_info[zig_version]
-except KeyError:
-    print(f"Invalid version, valid values: {list(zig_versions_info.keys())}")
-    raise
+    effective_zig_version = zig_version_info.get('version', zig_version)
 
-effective_zig_version = zig_version_info.get('version', zig_version)
+    for zig_platform in platforms:
+        python_platform = ZIG_PYTHON_PLATFORMS[zig_platform]
+        if zig_platform not in zig_version_info:
+            print(f"{zig_platform} not present for "
+                  f"version {zig_version} / {effective_zig_version}")
+            continue
+        zig_download = zig_version_info[zig_platform]
+        zig_url = zig_download['tarball']
+        expected_hash = zig_download['shasum']
 
-for zig_platform in platforms:
-    python_platform = ZIG_PYTHON_PLATFORMS[zig_platform]
-    if zig_platform not in zig_version_info:
-        print(f"{zig_platform} not present for "
-              f"version {zig_version} / {effective_zig_version}")
-        continue
-    zig_download = zig_version_info[zig_platform]
-    zig_url = zig_download['tarball']
-    expected_hash = zig_download['shasum']
+        with urllib.request.urlopen(zig_url) as request:
+            zig_archive = request.read()
+            zig_archive_hash = hashlib.sha256(zig_archive).hexdigest()
+            if zig_archive_hash != expected_hash:
+                print(zig_download, "SHA256 hash mismatch!")
+                raise AssertionError
+            print(f'{hashlib.sha256(zig_archive).hexdigest()} {zig_url}')
 
-    with urllib.request.urlopen(zig_url) as request:
-        zig_archive = request.read()
-        zig_archive_hash = hashlib.sha256(zig_archive).hexdigest()
-        if zig_archive_hash != expected_hash:
-            print(zig_download, "SHA256 hash mismatch!")
-            raise AssertionError
-        print(f'{hashlib.sha256(zig_archive).hexdigest()} {zig_url}')
+        wheel_path = write_ziglang_wheel(outdir,
+            version=effective_zig_version.replace('-', '.') + python_version_suffix,
+            platform=python_platform,
+            archive=zig_archive)
+        with open(wheel_path, 'rb') as wheel:
+            print(f'  {hashlib.sha256(wheel.read()).hexdigest()} {wheel_path}')
 
-    wheel_path = write_ziglang_wheel('dist/',
-        version=effective_zig_version.replace('-', '.') + python_version_suffix,
-        platform=python_platform,
-        archive=zig_archive)
-    with open(wheel_path, 'rb') as wheel:
-        print(f'  {hashlib.sha256(wheel.read()).hexdigest()} {wheel_path}')
+def get_argparser():
+    parser = argparse.ArgumentParser(prog=__file__, description="Repackage official Zig downloads as Python wheels")
+    parser.add_argument('--version', default='latest',
+                        help="version to package, use `latest` for latest release, `master` for nightly build")
+    parser.add_argument('--suffix', default='', help="wheel version suffix")
+    parser.add_argument('--outdir', default='dist/', help="target directory")
+    parser.add_argument('--platform', action='append', choices=list(ZIG_PYTHON_PLATFORMS.keys()), default=[],
+                        help="platform to build for, can be repeated")
+    return parser
+
+def main():
+    args = get_argparser().parse_args()
+    fetch_and_write_ziglang_wheels(outdir=args.outdir, zig_version=args.version,
+                                   python_version_suffix=args.suffix, platforms=args.platform)
+
+if __name__ == '__main__':
+    main()
