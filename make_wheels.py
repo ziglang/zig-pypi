@@ -134,7 +134,7 @@ def fetch_zig_version_info():
 
 
 def fetch_and_write_ziglang_wheels(
-    outdir='dist/', zig_version='master', python_version_suffix='', platforms=tuple()
+    outdir='dist/', zig_version='master', wheel_version_suffix='', platforms=tuple()
 ):
     Path(outdir).mkdir(exist_ok=True)
     if not platforms:
@@ -170,8 +170,9 @@ def fetch_and_write_ziglang_wheels(
                 raise AssertionError
             print(f'{hashlib.sha256(zig_archive).hexdigest()} {zig_url}')
 
+        wheel_version = effective_zig_version.split('+')[0].replace('-', '.')
         wheel_path = write_ziglang_wheel(outdir,
-            version=effective_zig_version.replace('-', '.') + python_version_suffix,
+            version=wheel_version + wheel_version_suffix,
             platform=python_platform,
             archive=zig_archive)
         with open(wheel_path, 'rb') as wheel:
@@ -190,7 +191,7 @@ def get_argparser():
 def main():
     args = get_argparser().parse_args()
     fetch_and_write_ziglang_wheels(outdir=args.outdir, zig_version=args.version,
-                                   python_version_suffix=args.suffix, platforms=args.platform)
+                                   wheel_version_suffix=args.suffix, platforms=args.platform)
 
 if __name__ == '__main__':
     main()
