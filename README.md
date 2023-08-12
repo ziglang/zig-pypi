@@ -14,12 +14,12 @@ The repackaged artifacts are published as the [ziglang PyPI package][pypi].
 Preparation
 -----------
 
-The script requires Python 3.5 or later.
+The script requires Python 3.7 or later and [PDM](https://pdm.fming.dev/latest/#installation).
 
 Install the dependencies:
 
 ```shell
-pip install wheel twine libarchive-c
+pdm install
 ```
 
 The `libarchive-c` Python library requires the native [libarchive][] library to be available.
@@ -32,7 +32,7 @@ Building wheels
 Run the repackaging script:
 
 ```shell
-python make_wheels.py --help
+$ pdm run make_wheels.py --help
 usage: make_wheels.py [-h] [--version VERSION] [--suffix SUFFIX] [--outdir OUTDIR]
                                                   [--platform {x86_64-windows,x86_64-macos,aarch64-macos,i386-linux,x86-linux,x86_64-linux,aarch64-linux,armv7a-linux}]
 
@@ -59,7 +59,7 @@ Uploading wheels
 Run the publishing utility:
 
 ```shell
-twine dist/*
+pdm run twine dist/*
 ```
 
 This command will upload the binary wheels built in the previous step to PyPI.
