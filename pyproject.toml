@@ -4,7 +4,7 @@ version = "0"
 
 requires-python = "~=3.7"
 dependencies = [
-  "wheel~=0.38.0",
+  "wheel~=0.41.0",
 ]
 
 [tool.pdm.dev-dependencies]

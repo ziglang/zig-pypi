@@ -26,12 +26,21 @@ ZIG_PYTHON_PLATFORMS = {
 }
 
 class ReproducibleWheelFile(WheelFile):
-    def writestr(self, zinfo, *args, **kwargs):
-        if not isinstance(zinfo, ZipInfo):
-            raise ValueError("ZipInfo required")
+    def writestr(self, zinfo_or_arcname, data, *args, **kwargs):
+        if isinstance(zinfo_or_arcname, ZipInfo):
+            zinfo = zinfo_or_arcname
+        else:
+            assert isinstance(zinfo_or_arcname, str)
+            zinfo = ZipInfo(zinfo_or_arcname)
+            zinfo.file_size = len(data)
+            zinfo.external_attr = 0o0644 << 16
+            if zinfo_or_arcname.endswith(".dist-info/RECORD"):
+                zinfo.external_attr = 0o0664 << 16
+
+        zinfo.compress_type = ZIP_DEFLATED
         zinfo.date_time = (1980,1,1,0,0,0)
         zinfo.create_system = 3
-        super().writestr(zinfo, *args, **kwargs)
+        super().writestr(zinfo, data, *args, **kwargs)
 
 
 def make_message(headers, payload=None):
@@ -50,11 +59,6 @@ def make_message(headers, payload=None):
 def write_wheel_file(filename, contents):
     with ReproducibleWheelFile(filename, 'w') as wheel:
         for member_info, member_source in contents.items():
-            if not isinstance(member_info, ZipInfo):
-                member_info = ZipInfo(member_info)
-                member_info.external_attr = 0o644 << 16
-            member_info.file_size = len(member_source)
-            member_info.compress_type = ZIP_DEFLATED
             wheel.writestr(member_info, bytes(member_source))
     return filename
 
