@@ -22,10 +22,6 @@ Install the dependencies:
 pdm install
 ```
 
-The `libarchive-c` Python library requires the native [libarchive][] library to be available.
-
-[libarchive]: https://libarchive.org/
-
 Building wheels
 ---------------
 

@@ -5,7 +5,6 @@ version = "0"
 requires-python = "~=3.7"
 dependencies = [
   "wheel~=0.38.0",
-  "libarchive-c~=5.0",
 ]
 
 [tool.pdm.dev-dependencies]
