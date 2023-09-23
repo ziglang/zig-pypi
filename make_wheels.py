@@ -1,13 +1,14 @@
 import argparse
+import io
 import os
 import json
 import hashlib
+import tarfile
 import urllib.request
 from pathlib import Path
 from email.message import EmailMessage
-from wheel.wheelfile import WheelFile, get_zipinfo_datetime
-from zipfile import ZipInfo, ZIP_DEFLATED
-import libarchive # from libarchive-c
+from wheel.wheelfile import WheelFile
+from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
 ZIG_VERSION_INFO_URL = 'https://ziglang.org/download/index.json'
 ZIG_PYTHON_PLATFORMS = {
@@ -78,22 +79,37 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
     })
 
 
+def iter_archive_contents(archive):
+    magic = archive[:4]
+    if magic[:4] == b"\xfd7zX":
+        with tarfile.open(mode="r|xz", fileobj=io.BytesIO(archive)) as tar:
+            for entry in tar:
+                if entry.isreg():
+                    yield entry.name, entry.mode | (1 << 15), tar.extractfile(entry).read()
+    elif magic[:4] == b"PK\x03\x04":
+        with ZipFile(io.BytesIO(archive)) as zip_file:
+            for entry in zip_file.infolist():
+                if not entry.is_dir():
+                    yield entry.filename, entry.external_attr >> 16, zip_file.read(entry)
+    else:
+        raise RuntimeError("Unsupported archive format")
+
+
 def write_ziglang_wheel(out_dir, *, version, platform, archive):
     contents = {}
     contents['ziglang/__init__.py'] = b''
 
-    with libarchive.memory_reader(archive) as archive:
-        for entry in archive:
-            entry_name = '/'.join(entry.name.split('/')[1:])
-            if entry.isdir or not entry_name:
-                continue
+    for entry_name, entry_mode, entry_data in iter_archive_contents(archive):
+        entry_name = '/'.join(entry_name.split('/')[1:])
+        if not entry_name:
+            continue
 
-            zip_info = ZipInfo(f'ziglang/{entry_name}')
-            zip_info.external_attr = (entry.mode & 0xFFFF) << 16
-            contents[zip_info] = b''.join(entry.get_blocks())
+        zip_info = ZipInfo(f'ziglang/{entry_name}')
+        zip_info.external_attr = (entry_mode & 0xFFFF) << 16
+        contents[zip_info] = entry_data
 
-            if entry_name.startswith('zig'):
-                contents['ziglang/__main__.py'] = f'''\
+        if entry_name.startswith('zig'):
+            contents['ziglang/__main__.py'] = f'''\
 import os, sys
 argv = [os.path.join(os.path.dirname(__file__), "{entry_name}"), *sys.argv[1:]]
 if os.name == 'posix':
