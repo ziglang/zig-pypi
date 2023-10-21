@@ -107,6 +107,8 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
         entry_name = '/'.join(entry_name.split('/')[1:])
         if not entry_name:
             continue
+        if entry_name.startswith('doc/'):
+            continue
 
         zip_info = ZipInfo(f'ziglang/{entry_name}')
         zip_info.external_attr = (entry_mode & 0xFFFF) << 16
