@@ -10,6 +10,7 @@ from email.message import EmailMessage
 from wheel.wheelfile import WheelFile
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
+
 ZIG_VERSION_INFO_URL = 'https://ziglang.org/download/index.json'
 ZIG_PYTHON_PLATFORMS = {
     'x86_64-windows': 'win_amd64',
@@ -24,6 +25,7 @@ ZIG_PYTHON_PLATFORMS = {
         'manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64',
     'armv7a-linux':   'manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l',
 }
+
 
 class ReproducibleWheelFile(WheelFile):
     def writestr(self, zinfo_or_arcname, data, *args, **kwargs):
@@ -200,6 +202,7 @@ def fetch_and_write_ziglang_wheels(
         with open(wheel_path, 'rb') as wheel:
             print(f'  {hashlib.sha256(wheel.read()).hexdigest()} {wheel_path}')
 
+
 def get_argparser():
     parser = argparse.ArgumentParser(prog=__file__, description="Repackage official Zig downloads as Python wheels")
     parser.add_argument('--version', default='latest',
@@ -210,10 +213,12 @@ def get_argparser():
                         help="platform to build for, can be repeated")
     return parser
 
+
 def main():
     args = get_argparser().parse_args()
     fetch_and_write_ziglang_wheels(outdir=args.outdir, zig_version=args.version,
                                    wheel_version_suffix=args.suffix, platforms=args.platform)
+
 
 if __name__ == '__main__':
     main()
