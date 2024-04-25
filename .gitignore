@@ -8,3 +8,6 @@ __pycache__/
 /.pdm-python
 /.venv
 /pdm.lock
+
+# Don't push any wheels
+*.whl
