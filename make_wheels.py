@@ -13,7 +13,7 @@ from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 ZIG_VERSION_INFO_URL = 'https://ziglang.org/download/index.json'
 ZIG_PYTHON_PLATFORMS = {
     'x86_64-windows': 'win_amd64',
-    'x86-windows':   'win32',
+    'x86-windows':    'win32',
     'x86_64-macos':   'macosx_10_9_x86_64',
     'aarch64-macos':  'macosx_11_0_arm64',
     'i386-linux':     'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
