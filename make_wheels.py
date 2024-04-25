@@ -17,12 +17,11 @@ ZIG_PYTHON_PLATFORMS = {
     'x86_64-macos':   'macosx_10_9_x86_64',
     'aarch64-macos':  'macosx_11_0_arm64',
     'i386-linux':     'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
-    # renamed i386 to x86
+    # renamed i386 to x86 since v0.11.0, i386 was last supported in v0.10.1
     'x86-linux':      'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
     'x86_64-linux':   'manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64',
     'aarch64-linux':
         'manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64',
-    # no longer present?
     'armv7a-linux':   'manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l',
 }
 
