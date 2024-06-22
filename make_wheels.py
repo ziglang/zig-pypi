@@ -15,8 +15,8 @@ ZIG_VERSION_INFO_URL = 'https://ziglang.org/download/index.json'
 ZIG_PYTHON_PLATFORMS = {
     'x86_64-windows': 'win_amd64',
     'x86-windows':    'win32',
-    'x86_64-macos':   'macosx_11_7_x86_64',
-    'aarch64-macos':  'macosx_11_7_arm64',
+    'x86_64-macos':   'macosx_12_0_x86_64',
+    'aarch64-macos':  'macosx_12_0_arm64',
     'i386-linux':     'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
     # renamed i386 to x86 since v0.11.0, i386 was last supported in v0.10.1
     'x86-linux':      'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
