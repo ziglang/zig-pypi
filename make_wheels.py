@@ -1,4 +1,5 @@
 import argparse
+import logging
 import io
 import os
 import json
@@ -216,6 +217,7 @@ def get_argparser():
 
 def main():
     args = get_argparser().parse_args()
+    logging.getLogger("wheel").setLevel(logging.WARNING)
     fetch_and_write_ziglang_wheels(outdir=args.outdir, zig_version=args.version,
                                    wheel_version_suffix=args.suffix, platforms=args.platform)
 
