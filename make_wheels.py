@@ -48,7 +48,7 @@ class ReproducibleWheelFile(WheelFile):
 
 def make_message(headers, payload=None):
     msg = EmailMessage()
-    for name, value in headers.items():
+    for name, value in headers:
         if isinstance(value, list):
             for value_part in value:
                 msg[name] = value_part
@@ -71,18 +71,18 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
     dist_info  = f'{name}-{version}.dist-info'
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
-        f'{dist_info}/METADATA': make_message({
-            'Metadata-Version': '2.1',
-            'Name': name,
-            'Version': version,
-            **metadata,
-        }, description),
-        f'{dist_info}/WHEEL': make_message({
-            'Wheel-Version': '1.0',
-            'Generator': 'ziglang make_wheels.py',
-            'Root-Is-Purelib': 'false',
-            'Tag': tag,
-        }),
+        f'{dist_info}/METADATA': make_message([
+            ('Metadata-Version', '2.4'),
+            ('Name', name),
+            ('Version', version),
+            *metadata,
+        ], description),
+        f'{dist_info}/WHEEL': make_message([
+            ('Wheel-Version', '1.0'),
+            ('Generator', 'ziglang make_wheels.py'),
+            ('Root-Is-Purelib', 'false'),
+            ('Tag', tag),
+        ]),
     })
 
 
