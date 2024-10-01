@@ -1,4 +1,5 @@
 import argparse
+import logging
 import io
 import os
 import json
@@ -15,8 +16,8 @@ ZIG_VERSION_INFO_URL = 'https://ziglang.org/download/index.json'
 ZIG_PYTHON_PLATFORMS = {
     'x86_64-windows': 'win_amd64',
     'x86-windows':    'win32',
-    'x86_64-macos':   'macosx_11_7_x86_64',
-    'aarch64-macos':  'macosx_11_7_arm64',
+    'x86_64-macos':   'macosx_12_0_x86_64',
+    'aarch64-macos':  'macosx_12_0_arm64',
     'i386-linux':     'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
     # renamed i386 to x86 since v0.11.0, i386 was last supported in v0.10.1
     'x86-linux':      'manylinux_2_12_i686.manylinux2010_i686.musllinux_1_1_i686',
@@ -47,7 +48,7 @@ class ReproducibleWheelFile(WheelFile):
 
 def make_message(headers, payload=None):
     msg = EmailMessage()
-    for name, value in headers.items():
+    for name, value in headers:
         if isinstance(value, list):
             for value_part in value:
                 msg[name] = value_part
@@ -70,18 +71,18 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
     dist_info  = f'{name}-{version}.dist-info'
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
-        f'{dist_info}/METADATA': make_message({
-            'Metadata-Version': '2.1',
-            'Name': name,
-            'Version': version,
-            **metadata,
-        }, description),
-        f'{dist_info}/WHEEL': make_message({
-            'Wheel-Version': '1.0',
-            'Generator': 'ziglang make_wheels.py',
-            'Root-Is-Purelib': 'false',
-            'Tag': tag,
-        }),
+        f'{dist_info}/METADATA': make_message([
+            ('Metadata-Version', '2.4'),
+            ('Name', name),
+            ('Version', version),
+            *metadata,
+        ], description),
+        f'{dist_info}/WHEEL': make_message([
+            ('Wheel-Version', '1.0'),
+            ('Generator', 'ziglang make_wheels.py'),
+            ('Root-Is-Purelib', 'false'),
+            ('Tag', tag),
+        ]),
     })
 
 
@@ -133,20 +134,33 @@ else:
         name='ziglang',
         version=version,
         tag=f'py3-none-{platform}',
-        metadata={
-            'Summary': 'Zig is a general-purpose programming language and toolchain for maintaining robust, optimal, and reusable software.',
-            'Description-Content-Type': 'text/markdown',
-            'License': 'MIT',
-            'Classifier': [
-                'License :: OSI Approved :: MIT License',
-            ],
-            'Project-URL': [
-                'Homepage, https://ziglang.org',
-                'Source Code, https://github.com/ziglang/zig-pypi',
-                'Bug Tracker, https://github.com/ziglang/zig-pypi/issues',
-            ],
-            'Requires-Python': '~=3.5',
-        },
+        metadata=[
+            ('Summary', 'Zig is a general-purpose programming language and toolchain for maintaining robust, optimal, and reusable software.'),
+            ('Description-Content-Type', "'text/markdown'; charset=UTF-8; variant=GFM"),
+            ('License-Expression', 'MIT'),
+            ('License-File', 'LICENSE'),
+            ('License-File', 'ziglang/lib/libc/glibc/LICENSES'),
+            ('License-File', 'ziglang/lib/libc/mingw/COPYING'),
+            ('License-File', 'ziglang/lib/libc/musl/COPYRIGHT'),
+            ('License-File', 'ziglang/lib/libc/wasi/LICENSE'),
+            ('License-File', 'ziglang/lib/libc/wasi/LICENSE-APACHE'),
+            ('License-File', 'ziglang/lib/libc/wasi/LICENSE-APACHE-LLVM'),
+            ('License-File', 'ziglang/lib/libc/wasi/LICENSE-MIT'),
+            ('License-File', 'ziglang/lib/libcxx/LICENSE.TXT'),
+            ('License-File', 'ziglang/lib/libcxxabi/LICENSE.TXT'),
+            ('License-File', 'ziglang/lib/libunwind/LICENSE.TXT'),
+            ('Classifier', 'Development Status :: 4 - Beta'),
+            ('Classifier', 'Intended Audience :: Developers'),
+            ('Classifier', 'Topic :: Software Development :: Compilers'),
+            ('Classifier', 'Topic :: Software Development :: Code Generators'),
+            ('Classifier', 'Topic :: Software Development :: Build Tools'),
+            ('Classifier', 'Programming Language :: Other'),
+            ('Classifier', 'Programming Language :: Other Scripting Engines'),
+            ('Project-URL', 'Homepage, https://ziglang.org'),
+            ('Project-URL', 'Source Code, https://github.com/ziglang/zig-pypi'),
+            ('Project-URL', 'Bug Tracker, https://github.com/ziglang/zig-pypi/issues'),
+            ('Requires-Python', '~=3.5'),
+        ],
         description=description,
         contents=contents,
     )
@@ -216,6 +230,7 @@ def get_argparser():
 
 def main():
     args = get_argparser().parse_args()
+    logging.getLogger("wheel").setLevel(logging.WARNING)
     fetch_and_write_ziglang_wheels(outdir=args.outdir, zig_version=args.version,
                                    wheel_version_suffix=args.suffix, platforms=args.platform)
 

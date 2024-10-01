@@ -14,7 +14,7 @@ The repackaged artifacts are published as the [ziglang PyPI package][pypi].
 Preparation
 -----------
 
-The script requires Python 3.7 or later and [PDM](https://pdm.fming.dev/latest/#installation).
+The script requires Python 3.8 or later and [PDM](https://pdm.fming.dev/latest/#installation).
 
 Install the dependencies:
 
