@@ -58,6 +58,9 @@ jobs:
   deploy_wheels:
     name: Deploy wheels
     needs: [build_wheels]
+    if: >-
+      github.event.inputs.push_to_pypi == 'true' &&
+      github.repository == 'ziglang/zig-pypi'
     environment: pypi
     runs-on: ubuntu-latest
     permissions:
@@ -76,14 +79,11 @@ jobs:
         with:
           subject-path: dist/*
 
-      # This will publish the wheels inputted to the action to PyPI (off by default).
+      # This will publish the list of wheels inputted to the action to PyPI (set to
+      # off, by default).
       # The workflow may be triggered multiple times with the `push_to_pypi` input
       # set to 'true' to publish the wheels for any configurable version (non-dev).
       - name: Publish wheels to PyPI
-        if: >-
-          github.event_name == 'workflow_dispatch' &&
-          github.event.inputs.push_to_pypi == 'true' &&
-          github.repository == 'ziglang/zig-pypi'
         uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.10.2
         with:
           packages-dir: dist/
