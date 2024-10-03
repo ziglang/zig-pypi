@@ -25,6 +25,7 @@ ZIG_PYTHON_PLATFORMS = {
     'aarch64-linux':
         'manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64',
     'armv7a-linux':   'manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l',
+    'powerpc64le-linux':  'manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le',
 }
 
 
