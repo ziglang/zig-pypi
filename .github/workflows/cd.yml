@@ -20,7 +20,7 @@ on:
       push_to_pypi:
         description: >
           Whether to push the built wheels to PyPI. Can be 'true' or 'false', defaults to 'false'.
-        required: false
+        required: true
         default: "false"
 
 jobs:
