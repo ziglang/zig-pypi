@@ -49,16 +49,27 @@ The process of converting release archives to binary wheels is deterministic, an
 
 [pypidl]: https://pypi.org/project/ziglang/#files
 
-Uploading wheels
-----------------
+Uploading wheels to PyPI
+------------------------
 
-Run the publishing utility:
+Trigger the publishing workflow from this repository manually (requires authorization)
+with the necessary inputs as mentioned in the [workflow file](.github/workflows/cd.yml)
+or in the GitHub Actions UI. The wheels are checked with `twine` before they are uploaded.
 
-```shell
-pdm run twine dist/*
-```
+The workflow will upload the wheels to PyPI to make them available for installation. It
+is possible to trigger it multiple times to upload wheels for different versions or
+platforms.
 
-This command will upload the binary wheels built in the previous step to PyPI.
+Verifying the provenance of wheels uploaded to PyPI
+---------------------------------------------------
+
+To establish build provenance, the workflow generates attestations for the uploaded wheels
+using the [GitHub Actions Attestations feature](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
+when it is run. Please navigate to the [Attestations interface](https://github.com/ziglang/zig-pypi/attestations)
+to view the attestations for the uploaded wheels.
+
+The attestations may be verified via the [GitHub (`gh`) CLI](https://cli.github.com/manual/gh_attestation_verify)
+or via the [GitHub API](https://docs.github.com/en/rest/users/attestations).
 
 License
 -------
