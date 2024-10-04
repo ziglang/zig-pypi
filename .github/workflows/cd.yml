@@ -1,7 +1,6 @@
 name: CD
 
 on:
-  pull_request: # FIXME: remove after testing and when stable for merging
   workflow_dispatch:
     inputs:
       version:
@@ -41,17 +40,15 @@ jobs:
       - name: Build wheels for all requested platforms
         shell: bash
         run: |
-          # FIXME: uncomment when ready
-          # platforms=${{ github.event.inputs.platforms }}
-          # IFS=',' read -r -a platform_array <<< "$platforms"
-          # for platform in "${platform_array[@]}"; do
-          #   python make_wheels.py \
-          #   --version ${{ github.event.inputs.version }} \
-          #   --suffix ${{ github.event.inputs.suffix }} \
-          #   --platform "$platform"
-          # done
-
-          python make_wheels.py --outdir dist/
+          platforms=${{ github.event.inputs.platforms }}
+          IFS=',' read -r -a platform_array <<< "$platforms"
+          for platform in "${platform_array[@]}"; do
+            python make_wheels.py \
+            --outdir dist/ \
+            --version ${{ github.event.inputs.version }} \
+            --suffix ${{ github.event.inputs.suffix }} \
+            --platform "$platform"
+          done
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
@@ -78,6 +75,9 @@ jobs:
         with:
           path: dist/
           merge-multiple: true
+
+      - name: Sanity check wheel artifacts
+        run: ls -R dist/
 
       - name: Generate artifact attestations
         uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
