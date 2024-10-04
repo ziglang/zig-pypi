@@ -111,6 +111,5 @@ jobs:
           echo -e '```\n' >> $GITHUB_STEP_SUMMARY
           for wheel in dist/*.whl; do
             shasum --algorithm 256 "$wheel" >> $GITHUB_STEP_SUMMARY
-            echo -e '\n' >> $GITHUB_STEP_SUMMARY
           done
           echo -e '```\n' >> $GITHUB_STEP_SUMMARY
