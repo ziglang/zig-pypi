@@ -87,3 +87,25 @@ jobs:
         uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.10.2
         with:
           packages-dir: dist/
+
+  inspect_wheels:
+    name: Inspect wheels
+    needs: [build_wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all built wheel artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: Inspect wheel artifacts
+        shell: bash
+        run: |
+          echo -e '## A list of built wheels and their SHA-256 checksums \n' >> $GITHUB_STEP_SUMMARY
+          echo -e '```\n' >> $GITHUB_STEP_SUMMARY
+          for wheel in dist/*.whl; do
+            shasum --algorithm 256 "$wheel" >> $GITHUB_STEP_SUMMARY
+            echo -e '\n' >> $GITHUB_STEP_SUMMARY
+          done
+          echo -e '```\n' >> $GITHUB_STEP_SUMMARY
