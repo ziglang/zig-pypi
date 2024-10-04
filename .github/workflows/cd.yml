@@ -1,6 +1,7 @@
 name: CD
 
 on:
+  push: # FIXME: remove after testing and when stable for merging
   pull_request: # FIXME: remove after testing and when stable for merging
   workflow_dispatch:
     inputs:
