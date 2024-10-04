@@ -1,7 +1,6 @@
 name: CD
 
 on:
-  push: # FIXME: remove after testing and when stable for merging
   pull_request: # FIXME: remove after testing and when stable for merging
   workflow_dispatch:
     inputs:
@@ -42,14 +41,17 @@ jobs:
       - name: Build wheels for all requested platforms
         shell: bash
         run: |
-          platforms=${{ github.event.inputs.platforms }}
-          IFS=',' read -r -a platform_array <<< "$platforms"
-          for platform in "${platform_array[@]}"; do
-            python make_wheels.py \
-            --version ${{ github.event.inputs.version }} \
-            --suffix ${{ github.event.inputs.suffix }} \
-            --platform "$platform"
-          done
+          # FIXME: uncomment when ready
+          # platforms=${{ github.event.inputs.platforms }}
+          # IFS=',' read -r -a platform_array <<< "$platforms"
+          # for platform in "${platform_array[@]}"; do
+          #   python make_wheels.py \
+          #   --version ${{ github.event.inputs.version }} \
+          #   --suffix ${{ github.event.inputs.suffix }} \
+          #   --platform "$platform"
+          # done
+
+          pdm run make_wheels.py --outdir dist/
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
