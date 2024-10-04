@@ -55,6 +55,7 @@ jobs:
         with:
           name: zig_wheels
           path: dist/*.whl
+          if-no-files-found: error
 
   deploy_wheels:
     name: Deploy wheels
