@@ -70,13 +70,24 @@ def write_wheel_file(filename, contents):
 def write_wheel(out_dir, *, name, version, tag, metadata, description, contents):
     wheel_name = f'{name}-{version}-{tag}.whl'
     dist_info  = f'{name}-{version}.dist-info'
+    license_files = {}
+    filtered_metadata = []
+    for header, value in metadata:
+        if header == 'License-File':
+            license_dest = f'{dist_info}/licenses/{value}'
+            if value in contents:
+                license_files[license_dest] = contents[value]
+            filtered_metadata.append((header, value))
+        filtered_metadata.append((header, value))
+
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
+        **license_files,
         f'{dist_info}/METADATA': make_message([
             ('Metadata-Version', '2.4'),
             ('Name', name),
             ('Version', version),
-            *metadata,
+            *filtered_metadata,
         ], description),
         f'{dist_info}/WHEEL': make_message([
             ('Wheel-Version', '1.0'),
@@ -107,12 +118,52 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
     contents = {}
     contents['ziglang/__init__.py'] = b''
 
+    license_files = {}
+
+    # The paths to these licenses MUST match both the actual files
+    # in the Zig source tarballs and the License-File entries listed
+    # below in the metadata. These are not prefixed with "ziglang/"
+    # since these are the actual paths in the Zig source tarballs.
+    license_paths = [
+        'LICENSE',
+        'lib/libc/glibc/LICENSES',
+        'lib/libc/mingw/COPYING',
+        'lib/libc/musl/COPYRIGHT',
+        'lib/libc/wasi/LICENSE',
+        'lib/libc/wasi/LICENSE-APACHE',
+        'lib/libc/wasi/LICENSE-APACHE-LLVM',
+        'lib/libc/wasi/LICENSE-MIT',
+        'lib/libcxx/LICENSE.TXT',
+        'lib/libcxxabi/LICENSE.TXT',
+        'lib/libunwind/LICENSE.TXT'
+    ]
+
+    found_license_files = set()
+
     for entry_name, entry_mode, entry_data in iter_archive_contents(archive):
         entry_name = '/'.join(entry_name.split('/')[1:])
         if not entry_name:
             continue
         if entry_name.startswith('doc/'):
             continue
+
+        # The license files and their paths MUST remain in sync with
+        # the paths in the official Zig tarballs and with the ones
+        # defined below in the metadata.
+        if any(entry_name == license_path for license_path in [
+            'LICENSE',
+            'lib/libc/glibc/LICENSES',
+            'lib/libc/mingw/COPYING',
+            'lib/libc/musl/COPYRIGHT',
+            'lib/libc/wasi/LICENSE',
+            'lib/libc/wasi/LICENSE-APACHE',
+            'lib/libc/wasi/LICENSE-APACHE-LLVM',
+            'lib/libc/wasi/LICENSE-MIT',
+            'lib/libcxx/LICENSE.TXT',
+            'lib/libcxxabi/LICENSE.TXT',
+            'lib/libunwind/LICENSE.TXT'
+        ]):
+            license_contents[entry_name] = entry_data
 
         zip_info = ZipInfo(f'ziglang/{entry_name}')
         zip_info.external_attr = (entry_mode & 0xFFFF) << 16
@@ -131,6 +182,10 @@ else:
     with open('README.pypi.md') as f:
         description = f.read()
 
+    dist_info = f'ziglang-{version}.dist-info'
+    for license_path, license_data in license_files.items():
+        contents[f"{dist_info}/licenses/ziglang/{license_path}"] = license_data
+
     return write_wheel(out_dir,
         name='ziglang',
         version=version,
@@ -138,6 +193,11 @@ else:
         metadata=[
             ('Summary', 'Zig is a general-purpose programming language and toolchain for maintaining robust, optimal, and reusable software.'),
             ('Description-Content-Type', "'text/markdown'; charset=UTF-8; variant=GFM"),
+            # The license expression and the file paths MUST remain in sync
+            # with the paths in the official Zig tarballs and with the ones
+            # defined above in the contents. The difference is that these
+            # are prefixed with "ziglang/" to match the paths in the wheel
+            # for metadata compliance.
             ('License-Expression', 'MIT'),
             ('License-File', 'LICENSE'),
             ('License-File', 'ziglang/lib/libc/glibc/LICENSES'),
