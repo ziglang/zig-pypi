@@ -2,11 +2,13 @@ import argparse
 import logging
 import io
 import os
+import re
 import json
 import hashlib
 import tarfile
+from warnings import warn
 import urllib.request
-from pathlib import Path
+from pathlib import Path, PurePath
 from email.message import EmailMessage
 from wheel.wheelfile import WheelFile
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
@@ -70,19 +72,12 @@ def write_wheel_file(filename, contents):
 def write_wheel(out_dir, *, name, version, tag, metadata, description, contents):
     wheel_name = f'{name}-{version}-{tag}.whl'
     dist_info  = f'{name}-{version}.dist-info'
-    license_files = {}
     filtered_metadata = []
     for header, value in metadata:
-        if header == 'License-File':
-            license_dest = f'{dist_info}/licenses/{value}'
-            if value in contents:
-                license_files[license_dest] = contents[value]
-            filtered_metadata.append((header, value))
         filtered_metadata.append((header, value))
 
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
-        **license_files,
         f'{dist_info}/METADATA': make_message([
             ('Metadata-Version', '2.4'),
             ('Name', name),
@@ -119,12 +114,35 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
     contents['ziglang/__init__.py'] = b''
 
     license_files = {}
+    found_license_files = set()
+    potential_extra_licenses = set()
 
-    # The paths to these licenses MUST match both the actual files
-    # in the Zig source tarballs and the License-File entries listed
-    # below in the metadata. These are not prefixed with "ziglang/"
-    # since these are the actual paths in the Zig source tarballs.
-    license_paths = [
+    # A bunch of standard license file patterns. If a file matches any of
+    # these, we need to add them to required_license_paths and metadata.
+    license_patterns = [
+        r'COPYING.*',
+        r'COPYRIGHT.*',
+        r'COPYLEFT.*',
+        r'LICEN[CS]E.*',
+        r'LICEN[CS]E-.*',
+        r'LICEN[CS]E\..*',
+        r'PATENTS.*',
+        r'NOTICE.*',
+        r'LEGAL.*',
+        r'AUTHORS.*',
+        r'RIGHT*',
+        r'PERMISSION*',
+        r'THIRD[-_]PARTY[-_]LICENSES?.*',
+        r'EULA*',
+        r'MIT*',
+        r'GPL*',
+        r'AGPL*',
+        r'LGPL*',
+        r'APACHE*',
+    ]
+    license_regex = re.compile('|'.join(f'^{pattern}$' for pattern in license_patterns), re.IGNORECASE)
+
+    required_license_paths = [
         'LICENSE',
         'lib/libc/glibc/LICENSES',
         'lib/libc/mingw/COPYING',
@@ -133,12 +151,12 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
         'lib/libc/wasi/LICENSE-APACHE',
         'lib/libc/wasi/LICENSE-APACHE-LLVM',
         'lib/libc/wasi/LICENSE-MIT',
+        'lib/libc/wasi/libc-bottom-half/cloudlibc/LICENSE',
+        'lib/libc/wasi/libc-top-half/musl/COPYRIGHT',
         'lib/libcxx/LICENSE.TXT',
         'lib/libcxxabi/LICENSE.TXT',
-        'lib/libunwind/LICENSE.TXT'
+        'lib/libunwind/LICENSE.TXT',
     ]
-
-    found_license_files = set()
 
     for entry_name, entry_mode, entry_data in iter_archive_contents(archive):
         entry_name = '/'.join(entry_name.split('/')[1:])
@@ -147,27 +165,18 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
         if entry_name.startswith('doc/'):
             continue
 
-        # The license files and their paths MUST remain in sync with
-        # the paths in the official Zig tarballs and with the ones
-        # defined below in the metadata.
-        if any(entry_name == license_path for license_path in [
-            'LICENSE',
-            'lib/libc/glibc/LICENSES',
-            'lib/libc/mingw/COPYING',
-            'lib/libc/musl/COPYRIGHT',
-            'lib/libc/wasi/LICENSE',
-            'lib/libc/wasi/LICENSE-APACHE',
-            'lib/libc/wasi/LICENSE-APACHE-LLVM',
-            'lib/libc/wasi/LICENSE-MIT',
-            'lib/libcxx/LICENSE.TXT',
-            'lib/libcxxabi/LICENSE.TXT',
-            'lib/libunwind/LICENSE.TXT'
-        ]):
-            license_contents[entry_name] = entry_data
+        # Check for additional license-like files
+        potential_license_filename = PurePath(entry_name).name
+        if license_regex.match(potential_license_filename):
+            potential_extra_licenses.add(entry_name)
 
         zip_info = ZipInfo(f'ziglang/{entry_name}')
         zip_info.external_attr = (entry_mode & 0xFFFF) << 16
         contents[zip_info] = entry_data
+
+        if entry_name in required_license_paths:
+            license_files[entry_name] = entry_data
+            found_license_files.add(entry_name)
 
         if entry_name.startswith('zig'):
             contents['ziglang/__main__.py'] = f'''\
@@ -179,12 +188,24 @@ else:
     import subprocess; sys.exit(subprocess.call(argv))
 '''.encode('ascii')
 
+    # 1. Check for missing required licenses paths
+    missing_licenses = set(required_license_paths) - found_license_files
+    if missing_licenses:
+        print(f"\033[93mWarning: the following required license files were not found in the Zig archive: {', '.join(sorted(missing_licenses))} "
+              "\nThis may indicate a change in Zig's license file structure or an error in the listing of license files and/or paths.\033[0m")
+
+    # 2. Check for potentially missing license files
+    extra_licenses = potential_extra_licenses - set(required_license_paths)
+    if extra_licenses:
+        print(f"\033[93mWarning: found additional potential license files in the Zig archive but not included in the metadata: {', '.join(sorted(extra_licenses))} "
+              "\nPlease consider adding these to the license paths if they should be included.\033[0m")
+
     with open('README.pypi.md') as f:
         description = f.read()
 
     dist_info = f'ziglang-{version}.dist-info'
     for license_path, license_data in license_files.items():
-        contents[f"{dist_info}/licenses/ziglang/{license_path}"] = license_data
+        contents[f'{dist_info}/licenses/ziglang/{license_path}'] = license_data
 
     return write_wheel(out_dir,
         name='ziglang',
@@ -199,7 +220,7 @@ else:
             # are prefixed with "ziglang/" to match the paths in the wheel
             # for metadata compliance.
             ('License-Expression', 'MIT'),
-            ('License-File', 'LICENSE'),
+            ('License-File', 'ziglang/LICENSE'),
             ('License-File', 'ziglang/lib/libc/glibc/LICENSES'),
             ('License-File', 'ziglang/lib/libc/mingw/COPYING'),
             ('License-File', 'ziglang/lib/libc/musl/COPYRIGHT'),
@@ -207,6 +228,8 @@ else:
             ('License-File', 'ziglang/lib/libc/wasi/LICENSE-APACHE'),
             ('License-File', 'ziglang/lib/libc/wasi/LICENSE-APACHE-LLVM'),
             ('License-File', 'ziglang/lib/libc/wasi/LICENSE-MIT'),
+            ('License-File', 'ziglang/lib/libc/wasi/libc-bottom-half/cloudlibc/LICENSE'),
+            ('License-File', 'ziglang/lib/libc/wasi/libc-top-half/musl/COPYRIGHT'),
             ('License-File', 'ziglang/lib/libcxx/LICENSE.TXT'),
             ('License-File', 'ziglang/lib/libcxxabi/LICENSE.TXT'),
             ('License-File', 'ziglang/lib/libunwind/LICENSE.TXT'),
