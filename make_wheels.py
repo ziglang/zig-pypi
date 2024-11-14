@@ -30,6 +30,8 @@ ZIG_PYTHON_PLATFORMS = {
     'powerpc64le-linux':  'manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le',
 }
 
+_YELLOW = "\033[93m"
+
 
 class ReproducibleWheelFile(WheelFile):
     def writestr(self, zinfo_or_arcname, data, *args, **kwargs):
@@ -142,6 +144,10 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
     ]
     license_regex = re.compile('|'.join(f'^{pattern}$' for pattern in license_patterns), re.IGNORECASE)
 
+    # These file paths MUST remain in sync with the paths in the official
+    # Zig tarballs and with the ones defined below in the metadata. The
+    # script will raise an error if any of these files are not found in
+    # the archive.
     required_license_paths = [
         'LICENSE',
         'lib/libc/glibc/LICENSES',
@@ -191,14 +197,20 @@ else:
     # 1. Check for missing required licenses paths
     missing_licenses = set(required_license_paths) - found_license_files
     if missing_licenses:
-        print(f"\033[93mWarning: the following required license files were not found in the Zig archive: {', '.join(sorted(missing_licenses))} "
-              "\nThis may indicate a change in Zig's license file structure or an error in the listing of license files and/or paths.\033[0m")
+        error_message = (
+            f"{_YELLOW}The following required license files were not found in the Zig archive: {', '.join(sorted(missing_licenses))} "
+            f"\nThis may indicate a change in Zig's license file structure or an error in the listing of license files and/or paths.{_YELLOW}"
+        )
+        raise RuntimeError(error_message)
 
     # 2. Check for potentially missing license files
     extra_licenses = potential_extra_licenses - set(required_license_paths)
     if extra_licenses:
-        print(f"\033[93mWarning: found additional potential license files in the Zig archive but not included in the metadata: {', '.join(sorted(extra_licenses))} "
-              "\nPlease consider adding these to the license paths if they should be included.\033[0m")
+        error_message = (
+            f"{_YELLOW}Found additional potential license files in the Zig archive but not included in the metadata: {', '.join(sorted(extra_licenses))} "
+            f"\nPlease consider adding these to the license paths if they should be included.{_YELLOW}"
+        )
+        raise RuntimeError(error_message)
 
     with open('README.pypi.md') as f:
         description = f.read()
