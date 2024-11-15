@@ -66,3 +66,7 @@ License
 -------
 
 This script is distributed under the terms of the [MIT (Expat) license](LICENSE.txt).
+
+Please refer to the [Zig license](https://ziglang.org/download/#license) for the terms
+of use of the Zig programming language itself, or look in the `.dist-info/licenses/`
+directory of the built wheels for individual licenses of the bundled components.
