@@ -1,3 +1,12 @@
+# /// script
+# requires-python = "~=3.9"
+# dependencies = [
+#   "wheel~=0.41.0",
+# ]
+# ///
+
+# Additionally, install twine to upload the wheels to PyPI.
+
 import argparse
 import logging
 import io
@@ -6,7 +15,6 @@ import re
 import json
 import hashlib
 import tarfile
-from warnings import warn
 import urllib.request
 from pathlib import Path, PurePath
 from email.message import EmailMessage
