@@ -7,6 +7,8 @@ dependencies = [
   "wheel~=0.41.0",
 ]
 
+# To verify wheels locally instead of through
+# the .github/workflows/cd.yml workflow
 [tool.pdm.dev-dependencies]
 upload = ["twine"]
 
