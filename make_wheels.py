@@ -225,7 +225,7 @@ else:
         tag=f'py3-none-{platform}',
         metadata=[
             ('Summary', 'Zig is a general-purpose programming language and toolchain for maintaining robust, optimal, and reusable software.'),
-            ('Description-Content-Type', "'text/markdown'; charset=UTF-8; variant=GFM"),
+            ('Description-Content-Type', 'text/markdown'),
             # The license expression and the file paths MUST remain in sync
             # with the paths in the official Zig tarballs and with the ones
             # defined above in the contents. The difference is that these
