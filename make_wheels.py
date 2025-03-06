@@ -308,8 +308,8 @@ def fetch_and_write_ziglang_wheels(
             zig_archive = request.read()
             zig_archive_hash = hashlib.sha256(zig_archive).hexdigest()
             if zig_archive_hash != expected_hash:
-                print(zig_download, "SHA256 hash mismatch!")
-                raise AssertionError
+                raise Exception(
+                    f"SHA256 hash mismatch for {zig_download}! expected shasum {expected_hash}")
             print(f'{hashlib.sha256(zig_archive).hexdigest()} {zig_url}')
 
         wheel_version = effective_zig_version.split('+')[0].replace('-', '.')
