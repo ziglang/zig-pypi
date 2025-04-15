@@ -16,7 +16,7 @@ Preparation
 
 The script requires Python 3.9 and later and a [PEP 723][pep723] compatible script
 runner, such as [`pipx`][pipx], [`pdm`][pdm], [`hatch`][hatch], [`uv`][uv], or
-similar. Please refer to their ocumentation for installation instructions.
+similar. Please refer to their documentation for installation instructions.
 
 [pep723]: https://peps.python.org/pep-0723/
 [pipx]: https://pipx.pypa.io/stable/examples/#pipx-run-examples
