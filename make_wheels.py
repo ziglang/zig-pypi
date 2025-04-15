@@ -25,6 +25,7 @@ from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 ZIG_VERSION_INFO_URL = 'https://ziglang.org/download/index.json'
 ZIG_PYTHON_PLATFORMS = {
     'x86_64-windows': 'win_amd64',
+    'aarch64-windows': 'win_arm64',
     'x86-windows':    'win32',
     'x86_64-macos':   'macosx_12_0_x86_64',
     'aarch64-macos':  'macosx_12_0_arm64',
