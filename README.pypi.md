@@ -16,10 +16,10 @@ Although Zig is useful in itself, the Zig toolchain includes a drop-in C and C++
 
 Usage
 -----
-To install and run the Zig toolchain from the command line, use:
+
+To run the Zig toolchain from the command line, use:
 
 ```shell
-pip install ziglang
 python -m ziglang
 ```
 
