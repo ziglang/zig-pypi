@@ -89,6 +89,9 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
 
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
+        f'{dist_info}/entry_points.txt': make_message([],
+            '[console_scripts]\nziglang = ziglang.__main__:main\nzig = ziglang.__main__:main'
+        ),
         f'{dist_info}/METADATA': make_message([
             ('Metadata-Version', '2.4'),
             ('Name', name),
@@ -195,12 +198,15 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
 
         if entry_name.startswith('zig'):
             contents['ziglang/__main__.py'] = f'''\
-import os, sys
-argv = [os.path.join(os.path.dirname(__file__), "{entry_name}"), *sys.argv[1:]]
-if os.name == 'posix':
-    os.execv(argv[0], argv)
-else:
-    import subprocess; sys.exit(subprocess.call(argv))
+def main():
+    import os, sys
+    argv = [os.path.join(os.path.dirname(__file__), "{entry_name}"), *sys.argv[1:]]
+    if os.name == 'posix':
+        os.execv(argv[0], argv)
+    else:
+        import subprocess; sys.exit(subprocess.call(argv))
+if __name__ == '__main__':
+    main()
 '''.encode('ascii')
 
     # 1. Check for missing required licenses paths
