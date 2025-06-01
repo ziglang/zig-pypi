@@ -89,6 +89,9 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
 
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
+        f'{dist_info}/entry_points.txt': make_message([],
+            '[console_scripts]\npython-zig = ziglang.__main__:dummy'
+        ),
         f'{dist_info}/METADATA': make_message([
             ('Metadata-Version', '2.4'),
             ('Name', name),
@@ -201,6 +204,8 @@ if os.name == 'posix':
     os.execv(argv[0], argv)
 else:
     import subprocess; sys.exit(subprocess.call(argv))
+
+def dummy(): """Dummy function for an entrypoint. Zig is executed as a side effect of the import."""
 '''.encode('ascii')
 
     # 1. Check for missing required licenses paths

@@ -31,6 +31,21 @@ import sys, subprocess
 subprocess.call([sys.executable, "-m", "ziglang"])
 ```
 
+Binary wrapper
+--------------
+
+The [ziglang][pypi] Python package installs a binary wrapper for the Zig compiler under the name `python-zig`; the name is different to avoid conflicts with any system-wide or user-wide `zig` binaries that may be already installed.
+
+
+Using with `uv`
+---------------
+
+The Zig compiler distributed in this Python package can be launched by [uv](https://docs.astral.sh/uv) without installation:
+
+```shell
+uvx --from ziglang python-zig
+```
+
 License
 -------
 
