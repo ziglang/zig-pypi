@@ -16,10 +16,10 @@ Although Zig is useful in itself, the Zig toolchain includes a drop-in C and C++
 
 Usage
 -----
-
-To run the Zig toolchain from the command line, use:
+To install and run the Zig toolchain from the command line, use:
 
 ```shell
+pip install ziglang
 python -m ziglang
 ```
 
@@ -29,6 +29,15 @@ To run the Zig toolchain from a Python program, use `sys.executable` to locate t
 import sys, subprocess
 
 subprocess.call([sys.executable, "-m", "ziglang"])
+```
+
+Usage through uv
+----------------
+
+Zig-pypi also exposes a Python tool that wraps the zig compiler so that build systems like [uv](https://docs.astral.sh/uv) can easily run the zig compiler:
+
+```shell
+uvx --from ziglang python-zig
 ```
 
 License
