@@ -90,7 +90,7 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
         f'{dist_info}/entry_points.txt': make_message([],
-            '[console_scripts]\nziglang = ziglang.__main__:main\nzig = ziglang.__main__:main'
+            '[console_scripts]\nzig-wrapper-python = ziglang.__main__:main'
         ),
         f'{dist_info}/METADATA': make_message([
             ('Metadata-Version', '2.4'),
