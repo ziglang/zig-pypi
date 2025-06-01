@@ -44,6 +44,8 @@ The Zig compiler distributed in this Python package can be launched by [uv](http
 
 ```shell
 uvx --from ziglang python-zig
+```
+
 License
 -------
 
