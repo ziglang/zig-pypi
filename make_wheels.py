@@ -37,6 +37,8 @@ ZIG_PYTHON_PLATFORMS = {
         'manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64',
     'armv7a-linux':   'manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l',
     'powerpc64le-linux':  'manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le',
+    's390x-linux':     'manylinux_2_17_s390x.manylinux2014_s390x.musllinux_1_1_s390x',
+    'riscv64-linux':   'manylinux_2_31_riscv64.musllinux_1_1_riscv64',
 }
 
 _YELLOW = "\033[93m"
