@@ -36,6 +36,8 @@ ZIG_PYTHON_PLATFORMS = {
     'aarch64-linux':
         'manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64',
     'armv7a-linux':   'manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l',
+    # renamed armv7a to arm since v0.15.1, armv7a was last supported in v0.14.1
+    'arm-linux':      'manylinux_2_17_armv7l.manylinux2014_armv7l.musllinux_1_1_armv7l',
     'powerpc64le-linux':  'manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le',
     's390x-linux':     'manylinux_2_17_s390x.manylinux2014_s390x.musllinux_1_1_s390x',
     'riscv64-linux':   'manylinux_2_31_riscv64.musllinux_1_1_riscv64',
@@ -176,13 +178,18 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
         'lib/libcxx/LICENSE.TXT',
         'lib/libcxxabi/LICENSE.TXT',
         'lib/libunwind/LICENSE.TXT',
+	'lib/libc/freebsd/COPYRIGHT',
+    ]
+    excluded_license_paths = [
+        # not a license text; contains macros that generate license strings
+        'lib/libc/include/generic-freebsd/sys/copyright.h',
     ]
 
     for entry_name, entry_mode, entry_data in iter_archive_contents(archive):
         entry_name = '/'.join(entry_name.split('/')[1:])
         if not entry_name:
             continue
-        if entry_name.startswith('doc/'):
+        if entry_name.startswith('doc/') or entry_name in excluded_license_paths:
             continue
 
         # Check for additional license-like files
@@ -261,6 +268,7 @@ def dummy(): """Dummy function for an entrypoint. Zig is executed as a side effe
             ('License-File', 'ziglang/lib/libcxx/LICENSE.TXT'),
             ('License-File', 'ziglang/lib/libcxxabi/LICENSE.TXT'),
             ('License-File', 'ziglang/lib/libunwind/LICENSE.TXT'),
+            ('License-File', 'ziglang/lib/libc/freebsd/COPYRIGHT'),
             ('Classifier', 'Development Status :: 4 - Beta'),
             ('Classifier', 'Intended Audience :: Developers'),
             ('Classifier', 'Topic :: Software Development :: Compilers'),
