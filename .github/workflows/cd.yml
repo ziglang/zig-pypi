@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to build Zig wheels for"
+        description: "The version to build Zig wheels for, use 'latest' for latest release, 'master' for nightly builds"
         required: true
         default: "latest"
       suffix:
         description: >
-          Suffix to append to the version in the wheel filename. This is useful for dev versions and version specifiers
+          Suffix to append to the version in the wheel filename, i.e., for dev versions and version specifiers
         required: false
         default: ""
       platforms:
