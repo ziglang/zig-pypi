@@ -32,14 +32,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
-      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: "3.x"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install .
+      - uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
 
       - name: Build wheels for all requested platforms
         shell: bash
@@ -47,7 +47,7 @@ jobs:
           platforms=${{ github.event.inputs.platforms }}
           IFS=',' read -r -a platform_array <<< "$platforms"
           for platform in "${platform_array[@]}"; do
-            python make_wheels.py \
+            uv run make_wheels.py \
             --outdir dist/ \
             --version ${{ github.event.inputs.version }} \
             --suffix ${{ github.event.inputs.suffix }} \
