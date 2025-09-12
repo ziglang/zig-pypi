@@ -16,7 +16,7 @@ on:
         description: >
           Comma-separated values of platforms to build wheels for
         required: false
-        default: "x86_64-windows,x86-windows,x86_64-macos,aarch64-macos,i386-linux,x86-linux,x86_64-linux,aarch64-linux,armv7a-linux,powerpc64le-linux"
+        default: "x86_64-windows,aarch64-windows,x86-windows,x86_64-macos,aarch64-macos,i386-linux,x86-linux,x86_64-linux,aarch64-linux,armv7a-linux,arm-linux,powerpc64le-linux,s390x-linux,riscv64-linux"
       push_to_pypi:
         description: >
           Whether to push the built wheels to PyPI. Can be 'true' or 'false', defaults to 'false'.
