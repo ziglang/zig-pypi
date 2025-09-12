@@ -43,14 +43,18 @@ jobs:
 
       - name: Build wheels for all requested platforms
         shell: bash
+        env:
+          GITHUB_EVENT_INPUTS_PLATFORMS: ${{ github.event.inputs.platforms }}
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
+          GITHUB_EVENT_INPUTS_SUFFIX: ${{ github.event.inputs.suffix }}
         run: |
-          platforms=${{ github.event.inputs.platforms }}
+          platforms=${GITHUB_EVENT_INPUTS_PLATFORMS}
           IFS=',' read -r -a platform_array <<< "$platforms"
           for platform in "${platform_array[@]}"; do
             uv run make_wheels.py \
             --outdir dist/ \
-            --version ${{ github.event.inputs.version }} \
-            --suffix ${{ github.event.inputs.suffix }} \
+            --version ${GITHUB_EVENT_INPUTS_VERSION} \
+            --suffix ${GITHUB_EVENT_INPUTS_SUFFIX} \
             --platform "$platform"
           done
 
