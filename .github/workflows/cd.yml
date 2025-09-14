@@ -51,11 +51,12 @@ jobs:
           platforms=${GITHUB_EVENT_INPUTS_PLATFORMS}
           IFS=',' read -r -a platform_array <<< "$platforms"
           for platform in "${platform_array[@]}"; do
-            uv run make_wheels.py \
-            --outdir dist/ \
-            --version ${GITHUB_EVENT_INPUTS_VERSION} \
-            --suffix ${GITHUB_EVENT_INPUTS_SUFFIX} \
-            --platform "$platform"
+            cmd="uv run make_wheels.py --outdir dist/ --version ${GITHUB_EVENT_INPUTS_VERSION}"
+            if [ -n "${GITHUB_EVENT_INPUTS_SUFFIX}" ]; then
+              cmd="$cmd --suffix ${GITHUB_EVENT_INPUTS_SUFFIX}"
+            fi
+            cmd="$cmd --platform $platform"
+            eval "$cmd"
           done
 
       - name: Upload wheel artifacts
