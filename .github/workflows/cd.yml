@@ -1,0 +1,123 @@
+name: CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to build Zig wheels for, use 'latest' for latest release, 'master' for nightly builds"
+        required: true
+        default: "latest"
+      suffix:
+        description: >
+          Suffix to append to the version in the wheel filename, i.e., for dev versions and version specifiers
+        required: false
+        default: ""
+      platforms:
+        description: >
+          Comma-separated values of platforms to build wheels for
+        required: false
+        default: "x86_64-windows,aarch64-windows,x86-windows,x86_64-macos,aarch64-macos,i386-linux,x86-linux,x86_64-linux,aarch64-linux,armv7a-linux,arm-linux,powerpc64le-linux,s390x-linux,riscv64-linux"
+      push_to_pypi:
+        description: >
+          Whether to push the built wheels to PyPI. Can be 'true' or 'false', defaults to 'false'.
+        required: true
+        default: "false"
+
+permissions: {}
+
+jobs:
+  build_wheels:
+    name: Build wheels
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: "3.x"
+
+      - uses: astral-sh/setup-uv@557e51de59eb14aaaba2ed9621916900a91d50c6 # v6.6.1
+
+      - name: Build wheels for all requested platforms
+        shell: bash
+        env:
+          GITHUB_EVENT_INPUTS_PLATFORMS: ${{ github.event.inputs.platforms }}
+          GITHUB_EVENT_INPUTS_VERSION: ${{ github.event.inputs.version }}
+          GITHUB_EVENT_INPUTS_SUFFIX: ${{ github.event.inputs.suffix }}
+        run: |
+          platforms=${GITHUB_EVENT_INPUTS_PLATFORMS}
+          IFS=',' read -r -a platform_array <<< "$platforms"
+          for platform in "${platform_array[@]}"; do
+            uv run make_wheels.py \
+            --outdir dist/ \
+            --version ${GITHUB_EVENT_INPUTS_VERSION} \
+            --suffix ${GITHUB_EVENT_INPUTS_SUFFIX} \
+            --platform "$platform"
+          done
+
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: zig_wheels
+          path: dist/*.whl
+          if-no-files-found: error
+
+  deploy_wheels:
+    name: Deploy wheels
+    needs: [build_wheels]
+    if: >-
+      github.event.inputs.push_to_pypi == 'true' &&
+      github.repository == 'ziglang/zig-pypi'
+    environment: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # for OIDC trusted publishing
+      attestations: write # for the GitHub Actions Attestations feature
+      contents: read
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: Sanity check wheel artifacts
+        run: ls -R dist/
+
+      - name: Generate artifact attestations
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-path: dist/*
+
+      # This will publish the list of wheels inputted to the action to PyPI (set to
+      # off, by default).
+      # The workflow may be triggered multiple times with the `push_to_pypi` input
+      # set to 'true' to publish the wheels for any configurable version (non-dev).
+      - name: Publish wheels to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          packages-dir: dist/
+
+  inspect_wheels:
+    name: Inspect wheels
+    needs: [build_wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all built wheel artifacts
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: Inspect wheel artifacts
+        shell: bash
+        run: |
+          echo -e '## A list of built wheels and their SHA-256 checksums \n' >> $GITHUB_STEP_SUMMARY
+          echo -e '```\n' >> $GITHUB_STEP_SUMMARY
+          for wheel in dist/*.whl; do
+            shasum --algorithm 256 "$wheel" >> $GITHUB_STEP_SUMMARY
+          done
+          echo -e '```\n' >> $GITHUB_STEP_SUMMARY
