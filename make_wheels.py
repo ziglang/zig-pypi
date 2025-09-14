@@ -338,14 +338,18 @@ def fetch_and_write_ziglang_wheels(
 
 
 def get_argparser():
-    parser = argparse.ArgumentParser(prog=__file__, description="Repackage official Zig downloads as Python wheels")
+    supported_platforms = ', '.join(sorted(ZIG_PYTHON_PLATFORMS.keys()))
+    description = (f"Repackage official Zig downloads as Python wheels.\n\n"
+                   f"Supported platforms: {supported_platforms}")
+    
+    parser = argparse.ArgumentParser(prog=__file__, description=description,
+                                   formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--version', default='latest',
                         help="version to package, use `latest` for latest release, `master` for nightly build")
     parser.add_argument('--suffix', default='', help="wheel version suffix")
     parser.add_argument('--outdir', default='dist/', help="target directory")
     parser.add_argument('--platform', action='append', default=[],
-                        help=f"platform to build for, use 'all' to build for all supported platforms, can be repeated. "
-                             f"Supported platforms: {', '.join(sorted(ZIG_PYTHON_PLATFORMS.keys()))}")
+                        help="platform to build for, use 'all' to build for all supported platforms, can be repeated")
     return parser
 
 
@@ -357,6 +361,7 @@ def main():
     if 'all' in platforms:
         platforms = list(ZIG_PYTHON_PLATFORMS.keys())
 
+    
     fetch_and_write_ziglang_wheels(outdir=args.outdir, zig_version=args.version,
                                    wheel_version_suffix=args.suffix, platforms=platforms)
 
