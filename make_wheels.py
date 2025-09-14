@@ -344,7 +344,8 @@ def get_argparser():
     parser.add_argument('--suffix', default='', help="wheel version suffix")
     parser.add_argument('--outdir', default='dist/', help="target directory")
     parser.add_argument('--platform', action='append', default=[],
-                        help="platform(s) to build for, can be repeated. Use 'all' to build for all supported platforms.")
+                        help=f"platform to build for, use 'all' to build for all supported platforms, can be repeated. "
+                             f"Supported platforms: {', '.join(sorted(ZIG_PYTHON_PLATFORMS.keys())
     return parser
 
 
