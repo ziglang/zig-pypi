@@ -14,9 +14,9 @@ on:
         default: ""
       platforms:
         description: >
-          Comma-separated values of platforms to build wheels for
+          Comma-separated list of specific platforms to build wheels for, or use 'all' to build for all supported platforms
         required: false
-        default: "x86_64-windows,aarch64-windows,x86-windows,x86_64-macos,aarch64-macos,i386-linux,x86-linux,x86_64-linux,aarch64-linux,armv7a-linux,arm-linux,powerpc64le-linux,s390x-linux,riscv64-linux"
+        default: "all"
       push_to_pypi:
         description: >
           Whether to push the built wheels to PyPI. Can be 'true' or 'false', defaults to 'false'.
@@ -51,11 +51,10 @@ jobs:
           platforms=${GITHUB_EVENT_INPUTS_PLATFORMS}
           IFS=',' read -r -a platform_array <<< "$platforms"
           for platform in "${platform_array[@]}"; do
-            cmd="uv run make_wheels.py --outdir dist/ --version ${GITHUB_EVENT_INPUTS_VERSION}"
+            cmd="uv run make_wheels.py --outdir dist/ --version ${GITHUB_EVENT_INPUTS_VERSION} --platform $platform"
             if [ -n "${GITHUB_EVENT_INPUTS_SUFFIX}" ]; then
               cmd="$cmd --suffix ${GITHUB_EVENT_INPUTS_SUFFIX}"
             fi
-            cmd="$cmd --platform $platform"
             eval "$cmd"
           done
 

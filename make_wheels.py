@@ -343,16 +343,21 @@ def get_argparser():
                         help="version to package, use `latest` for latest release, `master` for nightly build")
     parser.add_argument('--suffix', default='', help="wheel version suffix")
     parser.add_argument('--outdir', default='dist/', help="target directory")
-    parser.add_argument('--platform', action='append', choices=list(ZIG_PYTHON_PLATFORMS.keys()), default=[],
-                        help="platform to build for, can be repeated")
+    parser.add_argument('--platform', action='append', default=[],
+                        help="platform(s) to build for, can be repeated. Use 'all' to build for all supported platforms.")
     return parser
 
 
 def main():
     args = get_argparser().parse_args()
     logging.getLogger("wheel").setLevel(logging.WARNING)
+
+    platforms = args.platform
+    if 'all' in platforms:
+        platforms = list(ZIG_PYTHON_PLATFORMS.keys())
+
     fetch_and_write_ziglang_wheels(outdir=args.outdir, zig_version=args.version,
-                                   wheel_version_suffix=args.suffix, platforms=args.platform)
+                                   wheel_version_suffix=args.suffix, platforms=platforms)
 
 
 if __name__ == '__main__':
