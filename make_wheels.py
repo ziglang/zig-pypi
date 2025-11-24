@@ -97,7 +97,7 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
             '[console_scripts]\npython-zig = ziglang.__main__:dummy'
         ),
         f'{dist_info}/METADATA': make_message([
-            ('Metadata-Version', '2.4'),
+            ('Metadata-Version', '2.5'),
             ('Name', name),
             ('Version', version),
             *filtered_metadata,
@@ -269,6 +269,7 @@ def dummy(): """Dummy function for an entrypoint. Zig is executed as a side effe
             ('License-File', 'ziglang/lib/libcxxabi/LICENSE.TXT'),
             ('License-File', 'ziglang/lib/libunwind/LICENSE.TXT'),
             ('License-File', 'ziglang/lib/libc/freebsd/COPYRIGHT'),
+            ('Import-Name', 'ziglang'),
             ('Classifier', 'Development Status :: 4 - Beta'),
             ('Classifier', 'Intended Audience :: Developers'),
             ('Classifier', 'Topic :: Software Development :: Compilers'),
