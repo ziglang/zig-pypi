@@ -91,6 +91,17 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
     for header, value in metadata:
         filtered_metadata.append((header, value))
 
+    # The WHEEL file must contain the compatibility tags in their expanded form.
+    # see https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-contents
+    # see https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/#compressed-tag-sets
+    pytag, abitag, platformtag = tag.split("-")
+    expanded_tags = [
+        "-".join((x, y, z))
+        for z in platformtag.split(".")
+        for y in abitag.split(".")
+        for x in pytag.split(".")
+    ]
+
     return write_wheel_file(os.path.join(out_dir, wheel_name), {
         **contents,
         f'{dist_info}/entry_points.txt': make_message([],
@@ -106,7 +117,7 @@ def write_wheel(out_dir, *, name, version, tag, metadata, description, contents)
             ('Wheel-Version', '1.0'),
             ('Generator', 'ziglang make_wheels.py'),
             ('Root-Is-Purelib', 'false'),
-            ('Tag', tag),
+            ('Tag', expanded_tags),
         ]),
     })
 
