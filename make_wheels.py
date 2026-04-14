@@ -189,7 +189,8 @@ def write_ziglang_wheel(out_dir, *, version, platform, archive):
         'lib/libcxx/LICENSE.TXT',
         'lib/libcxxabi/LICENSE.TXT',
         'lib/libunwind/LICENSE.TXT',
-	'lib/libc/freebsd/COPYRIGHT',
+	    'lib/libc/freebsd/COPYRIGHT',
+        'lib/libc/wasi/fts/musl-fts/COPYING',
     ]
     excluded_license_paths = [
         # not a license text; contains macros that generate license strings
@@ -351,7 +352,7 @@ def get_argparser():
     supported_platforms = ', '.join(sorted(ZIG_PYTHON_PLATFORMS.keys()))
     description = (f"Repackage official Zig downloads as Python wheels.\n\n"
                    f"Supported platforms: {supported_platforms}")
-    
+
     parser = argparse.ArgumentParser(prog=__file__, description=description,
                                    formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--version', default='latest',
@@ -371,7 +372,7 @@ def main():
     if 'all' in platforms:
         platforms = list(ZIG_PYTHON_PLATFORMS.keys())
 
-    
+
     fetch_and_write_ziglang_wheels(outdir=args.outdir, zig_version=args.version,
                                    wheel_version_suffix=args.suffix, platforms=platforms)
 
