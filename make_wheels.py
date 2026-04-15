@@ -17,6 +17,7 @@ import hashlib
 import tarfile
 import urllib.request
 from pathlib import Path, PurePath
+from email.policy import EmailPolicy
 from email.message import EmailMessage
 from wheel.wheelfile import WheelFile
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
@@ -65,7 +66,7 @@ class ReproducibleWheelFile(WheelFile):
 
 
 def make_message(headers, payload=None):
-    msg = EmailMessage()
+    msg = EmailMessage(policy=EmailPolicy(max_line_length=0))
     for name, value in headers:
         if isinstance(value, list):
             for value_part in value:
